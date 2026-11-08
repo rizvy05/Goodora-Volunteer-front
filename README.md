@@ -4,16 +4,15 @@ Goodora connects volunteers with meaningful community development initiatives:
 users can discover programs, register as volunteers, participate in activities,
 and explore the impact of previous events.
 
-This repository contains the **frontend** web application.
+This repository contains the frontend web application.
 
 ## Tech Stack
-
 - [Next.js 16]
 - [React 19]
 - [TypeScript]
 - [Tailwind CSS v4]
 - [shadcn/ui]
-  - [lucide-react]
+- [lucide-react]
 
 Volunteer Programs
 Eight program areas, each with its own detail page:
