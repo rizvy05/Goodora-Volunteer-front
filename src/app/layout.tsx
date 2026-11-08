@@ -25,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${DMSans.variable} ${DMSans.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
