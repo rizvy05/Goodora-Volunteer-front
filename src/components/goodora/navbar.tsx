@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { ChevronDownIcon, MenuIcon } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuLabel,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -25,10 +25,14 @@ import { programs } from "@/lib/data/programs";
 import Logo from "./logo";
 
 const navLinks = [
-  { href: "/about", label: "About Us" },
+ { href: "/programs", label: "Programs" },
+ 
   { href: "/archive", label: "Archive" },
   { href: "/impact", label: "Our Impact" },
+   { href: "/volunteer-programs", label: "Add a Volunteer Program" },
+    { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
+ 
 ];
 
 function isActive(pathname: string, href: string) {
@@ -49,11 +53,11 @@ export default function Navbar() {
             Home
           </NavLink>
 
-          <NavLink href="/joinus" pathname={pathname}>
-            Join as Volunteer
-          </NavLink>
+          {/* <NavLink href="/volunteer-programs" pathname={pathname}>
+            Add a Volunteer Program
+          </NavLink> */}
 
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
                 "flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted",
@@ -73,7 +77,7 @@ export default function Navbar() {
                 <DropdownMenuItem
                   key={program.slug}
                   nativeButton={false}
-                  render={<Link href={`/programs/${program.slug}`} />}
+                  render={<Link href={`/programs`} />}
                 >
                   <span className="flex w-full items-center gap-2">
                     <program.icon className="size-4 text-primary" />
@@ -82,7 +86,7 @@ export default function Navbar() {
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
 
           {navLinks.map((link) => (
             <NavLink key={link.href} href={link.href} pathname={pathname}>
@@ -154,10 +158,15 @@ export default function Navbar() {
                 <Button nativeButton={false} render={<Link href="/signup" />}>
                   Sign Up
                 </Button>
-                <Button variant="outline" nativeButton={false} render={<Link href="/joinus" />}>
+                {/* <Button variant="outline" nativeButton={false} render={<Link href="/joinus" />}>
                   Join Us
-                </Button>
+                </Button> */}
+             
+
               </div>
+
+
+
             </nav>
           </SheetContent>
         </Sheet>

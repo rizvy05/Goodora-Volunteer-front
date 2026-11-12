@@ -1,11 +1,14 @@
 "use client";
-import { FormEvent, useState } from "react";
+
+import { ChangeEvent, FormEvent, useState } from "react";
 import {
   HeartHandshake,
   User,
   Clock,
   GraduationCap,
   CheckCircle2,
+  Camera,
+  X,
 } from "lucide-react";
 
 const programs = [
@@ -37,11 +40,55 @@ const inputClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-gray-700";
 
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024; // 2 MB
+
 export default function JoinUsPage() {
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoName, setPhotoName] = useState("");
+
+  // Handle profile picture selection (kept in state, sent as base64)
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      setPhoto(null);
+      setPhotoName("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file (JPG, PNG, or WebP).");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      alert("Image must be smaller than 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setPhoto(String(reader.result));
+      setPhotoName(file.name);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  // Remove the selected picture
+  const clearPhoto = () => {
+    setPhoto(null);
+    setPhotoName("");
+    const input = document.getElementById("photo") as HTMLInputElement | null;
+    if (input) input.value = "";
+  };
 
   // Handle multiple checkbox selections
   const toggleItem = (
@@ -77,6 +124,7 @@ export default function JoinUsPage() {
       bloodGroup: formData.get("bloodGroup"),
       location: formData.get("location"),
       address: formData.get("address"),
+      photo, // base64 data URL (or null)
 
       // Collect multiple checkbox values
       programs: formData.getAll("programs"),
@@ -139,6 +187,8 @@ export default function JoinUsPage() {
   const handleNewApplication = () => {
     setSelectedPrograms([]);
     setSelectedSkills([]);
+    setPhoto(null);
+    setPhotoName("");
     setSubmitted(false);
     setLoading(false);
   };
@@ -309,6 +359,61 @@ export default function JoinUsPage() {
                       className={inputClass}
                       required
                     />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>
+                      Profile Picture
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-4">
+                      {photo ? (
+                        <div className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo}
+                            alt="Profile preview"
+                            className="h-20 w-20 rounded-full border border-gray-200 object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={clearPhoto}
+                            aria-label="Remove picture"
+                            className="absolute -right-2 -top-2 rounded-full bg-gray-800 p-1 text-white transition hover:bg-gray-900"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-dashed border-gray-300 bg-gray-50">
+                          <Camera className="text-gray-400" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-48">
+                        <label
+                          htmlFor="photo"
+                          className="inline-block cursor-pointer rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-green-500 hover:bg-green-50"
+                        >
+                          {photo ? "Change Picture" : "Upload Picture"}
+                        </label>
+
+                        <input
+                          id="photo"
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                          className="hidden"
+                        />
+
+                        <p className="mt-2 text-xs text-gray-400">
+                          {photoName
+                            ? photoName
+                            : "JPG, PNG or WebP. Max 2 MB."}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
@@ -532,6 +637,7 @@ export default function JoinUsPage() {
 
                 </div>
               </div>
+
 
               <hr className="border-gray-100" />
 

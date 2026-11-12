@@ -33,11 +33,11 @@ export default function Hero() {
             event, and watch your hours turn into visible impact.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3">
+          {/* <div className="flex flex-wrap items-center gap-3">
             <Button
               size="lg"
               className="h-11 px-6 text-base"
-              render={<Link href="/signup" />}
+              render={<Link href="/joinus" />}
             >
               Become a Volunteer
               <ArrowRightIcon data-icon="inline-end" />
@@ -50,7 +50,29 @@ export default function Hero() {
             >
               Explore Programs
             </Button>
-          </div>
+          </div> */}
+
+          <div className="flex flex-wrap items-center gap-3">
+  <Button
+    nativeButton={false}
+    size="lg"
+    className="h-11 px-6 text-base"
+    render={<Link href="/joinus" />}
+  >
+    Become a Volunteer
+    <ArrowRightIcon data-icon="inline-end" />
+  </Button>
+
+  <Button
+    nativeButton={false}
+    size="lg"
+    variant="outline"
+    className="h-11 px-6 text-base"
+    render={<Link href="/programs" />}
+  >
+    Explore Programs
+  </Button>
+</div>
 
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <UsersIcon className="size-4 text-primary" aria-hidden />
