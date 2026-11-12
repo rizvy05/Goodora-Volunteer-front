@@ -3,16 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDownIcon, MenuIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuLabel,
-//   DropdownMenuSeparator,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -23,6 +16,15 @@ import {
 } from "@/components/ui/sheet";
 import { programs } from "@/lib/data/programs";
 import Logo from "./logo";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
 
 const navLinks = [
  { href: "/programs", label: "Programs" },
@@ -41,6 +43,17 @@ function isActive(pathname: string, href: string) {
 
 export default function Navbar() {
   const pathname = usePathname();
+const {data:session}=authClient.useSession()
+const user=session?.user
+console.log(user)
+
+const handleSignOut = async () => {
+ 
+    await authClient.signOut();
+}
+
+
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -52,43 +65,7 @@ export default function Navbar() {
           <NavLink href="/" pathname={pathname}>
             Home
           </NavLink>
-
-          {/* <NavLink href="/volunteer-programs" pathname={pathname}>
-            Add a Volunteer Program
-          </NavLink> */}
-
-          {/* <DropdownMenu>
-            <DropdownMenuTrigger
-              className={cn(
-                "flex h-9 items-center gap-1 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted",
-                isActive(pathname, "/programs") && "text-primary"
-              )}
-            >
-              Programs
-              <ChevronDownIcon className="size-4 opacity-60" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuLabel>All programs</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem nativeButton={false} render={<Link href="/programs" />}>
-                <span className="w-full font-medium">All Programs</span>
-              </DropdownMenuItem>
-              {programs.map((program) => (
-                <DropdownMenuItem
-                  key={program.slug}
-                  nativeButton={false}
-                  render={<Link href={`/programs`} />}
-                >
-                  <span className="flex w-full items-center gap-2">
-                    <program.icon className="size-4 text-primary" />
-                    {program.title}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu> */}
-
-          {navLinks.map((link) => (
+   {navLinks.map((link) => (
             <NavLink key={link.href} href={link.href} pathname={pathname}>
               {link.label}
             </NavLink>
@@ -150,6 +127,26 @@ export default function Navbar() {
                   {program.title}
                 </MobileLink>
               ))}
+{
+  user ? <Popover>
+  <PopoverTrigger render={<Avatar>
+  <AvatarImage src="user" />
+  <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+</Avatar>}>
+    Open Popover
+  </PopoverTrigger>
+  <PopoverContent>
+    <PopoverHeader>
+      <PopoverTitle>{user?.name.charAt(0)}</PopoverTitle>
+      <PopoverDescription>
+       <p> {user?.email}  </p>
+    <Button onClick={handleSignOut} variant="destructive">
+                  Sign Out
+                </Button>
+      </PopoverDescription>
+    </PopoverHeader>
+  </PopoverContent>
+</Popover>:
 
               <div className="mt-4 flex flex-col gap-2">
                 <Button variant="outline" nativeButton={false} render={<Link href="/signin" />}>
@@ -158,12 +155,13 @@ export default function Navbar() {
                 <Button nativeButton={false} render={<Link href="/signup" />}>
                   Sign Up
                 </Button>
-                {/* <Button variant="outline" nativeButton={false} render={<Link href="/joinus" />}>
-                  Join Us
-                </Button> */}
-             
+
 
               </div>
+
+
+}
+
 
 
 
