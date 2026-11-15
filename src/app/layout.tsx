@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import Navbar from "@/components/goodora/navbar";
 import Footer from "@/components/goodora/footer";
+import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
 const DMSans = DM_Sans({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 <main className="flex-1">{children}</main>
     
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

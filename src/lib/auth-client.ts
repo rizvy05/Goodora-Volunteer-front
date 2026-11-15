@@ -1,14 +1,8 @@
-import { createAuthClient } from "better-auth/client";
-const authClient = createAuthClient();
+import { createAuthClient } from "better-auth/react";
+import { jwtClient } from "better-auth/client/plugins"
 
-const signIn = async () => {
-  const data = await authClient.signIn.social({
-    provider: "google",
-  });
-};
-
-const signInWithGitHub = async () => {
-  const data = await authClient.signIn.social({
-    provider: "github", 
-  });
-};
+export const authClient = createAuthClient({
+  plugins: [
+    jwtClient() 
+  ]
+})

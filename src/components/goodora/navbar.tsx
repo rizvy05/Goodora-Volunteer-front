@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDownIcon, MenuIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MenuIcon, LayoutDashboard, LogOut, CalendarCheck, UserRound } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { programs } from "@/lib/data/programs";
+import { authClient } from "@/lib/auth-client";
 import Logo from "./logo";
 import {
   Popover,
@@ -23,37 +25,107 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover"
-
+} from "@/components/ui/popover";
 
 const navLinks = [
- { href: "/programs", label: "Programs" },
- 
+  { href: "/programs", label: "Programs" },
   { href: "/archive", label: "Archive" },
   { href: "/impact", label: "Our Impact" },
-   { href: "/volunteer-programs", label: "Add a Volunteer Program" },
-    { href: "/about", label: "About Us" },
+  { href: "/volunteer-programs", label: "Add a Volunteer Program" },
+  { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
- 
 ];
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function Navbar() {
-  const pathname = usePathname();
-const {data:session}=authClient.useSession()
-const user=session?.user
-console.log(user)
+type MenuUser = {
+  name?: string | null;
+  email?: string;
+  image?: string | null;
+};
 
-const handleSignOut = async () => {
- 
-    await authClient.signOut();
+function UserMenu({
+  user,
+  onSignOut,
+}: {
+  user: MenuUser | null | undefined;
+  onSignOut: () => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Open user menu"
+      >
+        <Avatar className="size-9 cursor-pointer border">
+          <AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
+          <AvatarFallback>
+            {user?.name?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      </PopoverTrigger>
+
+      <PopoverContent align="end" className="w-64">
+        <PopoverHeader>
+          <PopoverTitle>{user?.name}</PopoverTitle>
+          <PopoverDescription>{user?.email}</PopoverDescription>
+        </PopoverHeader>
+
+        <div className="flex flex-col gap-2 pt-3">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            nativeButton={false}
+            render={<Link href="/profile" />}
+          >
+            <UserRound className="mr-2 size-4" />
+            Profile
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+          >
+            <LayoutDashboard className="mr-2 size-4" />
+            Dashboard
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            nativeButton={false}
+            render={<Link href="/my-bookings" />}
+          >
+            <CalendarCheck className="mr-2 size-4" />
+            My Bookings
+          </Button>
+
+          <Button
+            variant="destructive"
+            className="w-full justify-start"
+            onClick={onSignOut}
+          >
+            <LogOut className="mr-2 size-4" />
+            Sign Out
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
+export default function Navbar() {
+  const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
-
+  const handleSignOut = async () => {
+    await authClient.signOut();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -65,7 +137,8 @@ const handleSignOut = async () => {
           <NavLink href="/" pathname={pathname}>
             Home
           </NavLink>
-   {navLinks.map((link) => (
+
+          {navLinks.map((link) => (
             <NavLink key={link.href} href={link.href} pathname={pathname}>
               {link.label}
             </NavLink>
@@ -74,12 +147,19 @@ const handleSignOut = async () => {
 
         {/* Desktop auth actions */}
         <div className="hidden items-center gap-2 lg:flex">
-          <Button variant="ghost" nativeButton={false} render={<Link href="/signin" />}>
-            Sign In
-          </Button>
-          <Button nativeButton={false} render={<Link href="/signup" />}>
-            Sign Up
-          </Button>
+          {user ? (
+            <UserMenu user={user} onSignOut={handleSignOut} />
+          ) : (
+            <>
+              <Button variant="ghost" nativeButton={false} render={<Link href="/signin" />}>
+                Sign In
+              </Button>
+
+              <Button nativeButton={false} render={<Link href="/signup" />}>
+                Sign Up
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile menu */}
@@ -90,6 +170,7 @@ const handleSignOut = async () => {
           >
             <MenuIcon className="size-5" />
           </SheetTrigger>
+
           <SheetContent side="right" className="w-80 overflow-y-auto">
             <SheetHeader>
               <SheetTitle>
@@ -99,6 +180,7 @@ const handleSignOut = async () => {
                 Social development & volunteer platform
               </SheetDescription>
             </SheetHeader>
+
             <nav
               aria-label="Mobile"
               className="flex flex-col gap-1 px-4 pb-8"
@@ -106,16 +188,21 @@ const handleSignOut = async () => {
               <MobileLink href="/" pathname={pathname}>
                 Home
               </MobileLink>
-              <MobileLink href="/about" pathname={pathname}>
-                About Us
-              </MobileLink>
 
-              <p className="mt-2 mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              {navLinks.map((link) => (
+                <MobileLink
+                  key={link.href}
+                  href={link.href}
+                  pathname={pathname}
+                >
+                  {link.label}
+                </MobileLink>
+              ))}
+
+              <p className="mt-3 mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Programs
               </p>
-              <MobileLink href="/programs" pathname={pathname}>
-                All Programs
-              </MobileLink>
+
               {programs.map((program) => (
                 <MobileLink
                   key={program.slug}
@@ -127,44 +214,87 @@ const handleSignOut = async () => {
                   {program.title}
                 </MobileLink>
               ))}
-{
-  user ? <Popover>
-  <PopoverTrigger render={<Avatar>
-  <AvatarImage src="user" />
-  <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
-</Avatar>}>
-    Open Popover
-  </PopoverTrigger>
-  <PopoverContent>
-    <PopoverHeader>
-      <PopoverTitle>{user?.name.charAt(0)}</PopoverTitle>
-      <PopoverDescription>
-       <p> {user?.email}  </p>
-    <Button onClick={handleSignOut} variant="destructive">
-                  Sign Out
-                </Button>
-      </PopoverDescription>
-    </PopoverHeader>
-  </PopoverContent>
-</Popover>:
 
-              <div className="mt-4 flex flex-col gap-2">
-                <Button variant="outline" nativeButton={false} render={<Link href="/signin" />}>
-                  Sign In
-                </Button>
-                <Button nativeButton={false} render={<Link href="/signup" />}>
-                  Sign Up
-                </Button>
+              <div className="mt-4 border-t pt-4">
+                {user ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="size-9">
+                        <AvatarImage src={user.image || ""} />
+                        <AvatarFallback>
+                          {user.name?.charAt(0).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
 
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      nativeButton={false}
+                      render={<Link href="/signin" />}
+                    >
+                      Sign In
+                    </Button>
 
+                    <Button nativeButton={false} render={<Link href="/signup" />}>
+                      Sign Up
+                    </Button>
+                  </div>
+                )}
+
+                {user && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      nativeButton={false}
+                      render={<Link href="/profile" />}
+                    >
+                      <UserRound className="mr-2 size-4" />
+                      Profile
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      nativeButton={false}
+                      render={<Link href="/dashboard" />}
+                    >
+                      <LayoutDashboard className="mr-2 size-4" />
+                      Dashboard
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      nativeButton={false}
+                      render={<Link href="/my-bookings" />}
+                    >
+                      <CalendarCheck className="mr-2 size-4" />
+                      My Bookings
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      className="w-full justify-start"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="mr-2 size-4" />
+                      Sign Out
+                    </Button>
+                  </div>
+                )}
               </div>
-
-
-}
-
-
-
-
             </nav>
           </SheetContent>
         </Sheet>
@@ -183,6 +313,7 @@ function NavLink({
   children: React.ReactNode;
 }) {
   const active = isActive(pathname, href);
+
   return (
     <Link
       href={href}
@@ -209,6 +340,7 @@ function MobileLink({
   children: React.ReactNode;
 }) {
   const active = isActive(pathname, href);
+
   return (
     <Link
       href={href}
@@ -223,3 +355,228 @@ function MobileLink({
     </Link>
   );
 }
+
+
+
+
+// "use client";
+
+// import Link from "next/link";
+// import { usePathname } from "next/navigation";
+// import { MenuIcon } from "lucide-react";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { cn } from "cn";
+// import { Button } from "@/components/ui/button";
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetDescription,
+//   SheetHeader,
+//   SheetTitle,
+//   SheetTrigger,
+// } from "@/components/ui/sheet";
+// import { programs } from "@/lib/data/programs";
+// import { authClient } from "@/lib/auth-client";
+// import Logo from "./logo";
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverDescription,
+//   PopoverHeader,
+//   PopoverTitle,
+//   PopoverTrigger,
+// } from "@/components/ui/popover"
+
+
+// const navLinks = [
+//  { href: "/programs", label: "Programs" },
+ 
+//   { href: "/archive", label: "Archive" },
+//   { href: "/impact", label: "Our Impact" },
+//    { href: "/volunteer-programs", label: "Add a Volunteer Program" },
+//     { href: "/about", label: "About Us" },
+//   { href: "/contact", label: "Contact" },
+ 
+// ];
+
+// function isActive(pathname: string, href: string) {
+//   return pathname === href || pathname.startsWith(`${href}/`);
+// }
+
+// export default function Navbar() {
+//   const pathname = usePathname();
+// const {data:session}=authClient.useSession()
+// const user=session?.user
+// console.log(user)
+
+// const handleSignOut = async () => {
+ 
+//     await authClient.signOut();
+// }
+
+
+
+
+//   return (
+//     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+//       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+//         <Logo />
+
+//         {/* Desktop navigation */}
+//         <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+//           <NavLink href="/" pathname={pathname}>
+//             Home
+//           </NavLink>
+//    {navLinks.map((link) => (
+//             <NavLink key={link.href} href={link.href} pathname={pathname}>
+//               {link.label}
+//             </NavLink>
+//           ))}
+//         </nav>
+
+//         {/* Desktop auth actions */}
+//         <div className="hidden items-center gap-2 lg:flex">
+//           <Button variant="ghost" nativeButton={false} render={<Link href="/signin" />}>
+//             Sign In
+//           </Button>
+//           <Button nativeButton={false} render={<Link href="/signup" />}>
+//             Sign Up
+//           </Button>
+//         </div>
+
+//         {/* Mobile menu */}
+//         <Sheet>
+//           <SheetTrigger
+//             className="inline-flex size-10 items-center justify-center rounded-lg hover:bg-muted lg:hidden"
+//             aria-label="Open menu"
+//           >
+//             <MenuIcon className="size-5" />
+//           </SheetTrigger>
+//           <SheetContent side="right" className="w-80 overflow-y-auto">
+//             <SheetHeader>
+//               <SheetTitle>
+//                 <Logo />
+//               </SheetTitle>
+//               <SheetDescription>
+//                 Social development & volunteer platform
+//               </SheetDescription>
+//             </SheetHeader>
+//             <nav
+//               aria-label="Mobile"
+//               className="flex flex-col gap-1 px-4 pb-8"
+//             >
+//               <MobileLink href="/" pathname={pathname}>
+//                 Home
+//               </MobileLink>
+//               <MobileLink href="/about" pathname={pathname}>
+//                 About Us
+//               </MobileLink>
+
+//               <p className="mt-2 mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+//                 Programs
+//               </p>
+//               <MobileLink href="/programs" pathname={pathname}>
+//                 All Programs
+//               </MobileLink>
+//               {programs.map((program) => (
+//                 <MobileLink
+//                   key={program.slug}
+//                   href={`/programs/${program.slug}`}
+//                   pathname={pathname}
+//                   className="pl-9"
+//                 >
+//                   <program.icon className="mr-2 inline size-4 text-primary" />
+//                   {program.title}
+//                 </MobileLink>
+//               ))}
+// {
+//   user ? <Popover>
+//   <PopoverTrigger render={<Avatar>
+//   <AvatarImage src="user" />
+//   <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+// </Avatar>}>
+//     Open Popover
+//   </PopoverTrigger>
+//   <PopoverContent>
+//     <PopoverHeader>
+//       <PopoverTitle>{user?.name.charAt(0)}</PopoverTitle>
+//       <PopoverDescription>
+//        <p> {user?.email}  </p>
+//     <Button onClick={handleSignOut} variant="destructive">
+//                   Sign Out
+//                 </Button>
+//       </PopoverDescription>
+//     </PopoverHeader>
+//   </PopoverContent>
+// </Popover>:
+
+//               <div className="mt-4 flex flex-col gap-2">
+//                 <Button variant="outline" nativeButton={false} render={<Link href="/signin" />}>
+//                   Sign In
+//                 </Button>
+//                 <Button nativeButton={false} render={<Link href="/signup" />}>
+//                   Sign Up
+//                 </Button>
+
+
+//               </div>
+//             </nav>
+//           </SheetContent>
+//         </Sheet>
+//       </div>
+       
+//       </div>
+//     </header>
+//   );
+// }
+
+// function NavLink({
+//   href,
+//   pathname,
+//   children,
+// }: {
+//   href: string;
+//   pathname: string;
+//   children: React.ReactNode;
+// }) {
+//   const active = isActive(pathname, href);
+//   return (
+//     <Link
+//       href={href}
+//       className={cn(
+//         "flex h-9 items-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted",
+//         active ? "text-primary" : "text-foreground/80"
+//       )}
+//       aria-current={active ? "page" : undefined}
+//     >
+//       {children}
+//     </Link>
+//   );
+// }
+
+// function MobileLink({
+//   href,
+//   pathname,
+//   className,
+//   children,
+// }: {
+//   href: string;
+//   pathname: string;
+//   className?: string;
+//   children: React.ReactNode;
+// }) {
+//   const active = isActive(pathname, href);
+//   return (
+//     <Link
+//       href={href}
+//       className={cn(
+//         "flex h-10 items-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted",
+//         active ? "bg-secondary text-primary" : "text-foreground/80",
+//         className
+//       )}
+//       aria-current={active ? "page" : undefined}
+//     >
+//       {children}
+//     </Link>
+//   );
+// } 

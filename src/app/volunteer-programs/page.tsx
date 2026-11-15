@@ -96,18 +96,22 @@ export default function VolunteerProgramsAdminPage() {
 
   const isEditing = editingId !== null;
 
+  const fetchPrograms = async () => {
+    const response = await fetch(`${API_URL}/programs`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Could not load programs.");
+    }
+
+    return (Array.isArray(result) ? result : result.data || []) as VolunteerProgram[];
+  };
+
   const loadPrograms = async () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/programs`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Could not load programs.");
-      }
-
-      setPrograms(Array.isArray(result) ? result : result.data || []);
+      setPrograms(await fetchPrograms());
     } catch (error) {
       alert(
         error instanceof Error
@@ -120,7 +124,28 @@ export default function VolunteerProgramsAdminPage() {
   };
 
   useEffect(() => {
-    void loadPrograms();
+    let active = true;
+
+    void (async () => {
+      try {
+        const loaded = await fetchPrograms();
+        if (active) setPrograms(loaded);
+      } catch (error) {
+        if (active) {
+          alert(
+            error instanceof Error
+              ? error.message
+              : "Something went wrong while loading programs."
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const updateField = (
@@ -327,7 +352,7 @@ export default function VolunteerProgramsAdminPage() {
 
             <button
               type="button"
-              onClick={loadPrograms}
+              onClick={() => void loadPrograms()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
             >

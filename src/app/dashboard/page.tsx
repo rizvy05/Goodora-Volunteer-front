@@ -10,6 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { pastEvents } from "@/lib/data/site";
 import { getProgram } from "@/lib/data/programs";
+import {
+  ProgramsJoinedStat,
+  RecentBookings,
+} from "@/components/goodora/dashboard-bookings";
 
 export const metadata: Metadata = {
   title: "Volunteer Dashboard",
@@ -20,32 +24,7 @@ export const metadata: Metadata = {
 const myStats = [
   { label: "Events attended", value: "14" },
   { label: "Hours contributed", value: "96" },
-  { label: "Programs joined", value: "4" },
   { label: "Impact badges", value: "6" },
-];
-
-const myActivities = [
-  {
-    id: "ACT-001",
-    title: "Weekend community kitchen",
-    programTitle: "Food Distribution",
-    date: "Nov 14, 2026",
-    status: "Confirmed",
-  },
-  {
-    id: "ACT-002",
-    title: "Old-town plaza cleanup",
-    programTitle: "Community Cleaning",
-    date: "Nov 15, 2026",
-    status: "Confirmed",
-  },
-  {
-    id: "ACT-003",
-    title: "Winter clothing drive launch",
-    programTitle: "Clothing Donation",
-    date: "Nov 21, 2026",
-    status: "Waitlisted",
-  },
 ];
 
 export default function DashboardPage() {
@@ -60,8 +39,8 @@ export default function DashboardPage() {
             Welcome back, <span className="text-primary">Volunteer</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            All dashboard data below is illustrative until the backend is
-            connected.
+            Your bookings below are loaded live from your account. Events and
+            hours are illustrative until tracking is connected.
           </p>
         </div>
         <Button render={<Link href="/programs" />}>
@@ -81,45 +60,12 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+        <ProgramsJoinedStat />
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-3">
         <section className="lg:col-span-2" aria-labelledby="my-activities">
-          <Card className="py-5">
-            <CardHeader className="pb-1 [.border-b]:pb-4 border-b">
-              <CardTitle className="text-base font-semibold">
-                My activities
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <ul className="divide-y divide-border">
-                {myActivities.map((activity) => (
-                  <li
-                    key={activity.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {activity.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.programTitle} · {activity.date}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        activity.status === "Confirmed"
-                          ? "bg-secondary text-primary"
-                          : "bg-gold/20 text-gold-foreground"
-                      }`}
-                    >
-                      {activity.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <RecentBookings />
         </section>
 
         <section aria-labelledby="past-summary">

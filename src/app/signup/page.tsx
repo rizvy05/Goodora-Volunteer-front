@@ -1,12 +1,13 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
-import { CircleCheckIcon } from "lucide-react";
+import { CameraIcon, CircleCheckIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { fileToDataUrl } from "@/lib/image";
 import {
   Card,
   CardContent,
@@ -17,33 +18,72 @@ import {
 
 export default function SignUpPage() {
   const [created, setCreated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
 
-const handleGoogleSignUp = async (e:React.SubmitEvent<HTMLElement>) => {
-  e.preventDefault();}
-const handleGitHubSignUp = async (e:React.SubmitEvent<HTMLElement>) => {
-  e.preventDefault();}
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
+    setError(null);
 
-const formData = new FormData(e.target)
-const user=Object.fromEntries(formData.entries())
-console.log(user)
-const {data,error}=await authClient.signUp({
-  email:user.email as string,
-  password:user.password as string,
-  name:user.name as string
-})
-console.log(data,error)
-}
-if (error) {
-  console.error("Error signing up:", error);
-  return;
-}
-if (data) {
-  console.log("User signed up successfully:", data);
-  setCreated(true)
-  redirect("/")
-}
+    try {
+      setImage(await fileToDataUrl(file, 512));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read the image.");
+      event.target.value = "";
+    }
+  }
 
+  function clearImage() {
+    setImage(null);
+    const input = document.getElementById("signup-photo") as HTMLInputElement | null;
+    if (input) input.value = "";
+  }
+
+  async function handleSignUp(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const user = Object.fromEntries(formData.entries());
+
+    if (user.password !== user.confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setPending(true);
+
+    const { data, error } = await authClient.signUp.email({
+      email: user.email as string,
+      password: user.password as string,
+      name: user.name as string,
+      ...(image ? { image } : {}),
+    });
+
+    setPending(false);
+
+    if (error) {
+      setError(error.message ?? "Unable to create your account.");
+      return;
+    }
+
+    if (data) setCreated(true);
+  }
+
+  async function handleSocialSignUp(provider: "google" | "github") {
+    setError(null);
+    const { error } = await authClient.signIn.social({
+      provider,
+      callbackURL: "/",
+    });
+
+    if (error) {
+      setError(error.message ?? "Unable to start social sign up.");
+    }
+  }
 
 
   if (created) {
@@ -54,12 +94,12 @@ if (data) {
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
-          Account created (demo)
+          Account created
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Registration isn&apos;t connected to a backend yet — in a live
-          deployment you&apos;d be redirected to your dashboard now.
+          Your account is ready — sign in and start contributing to
+          community programs.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -89,13 +129,7 @@ if (data) {
         </CardHeader>
 
         <CardContent className="px-6 sm:px-8">
-          <form
-            className="flex flex-col gap-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setCreated(true);
-            }}
-          >
+          <form className="flex flex-col gap-5" onSubmit={handleSignUp}>
             <label className="flex flex-col gap-2 text-sm font-medium">
               Full name
               <Input
@@ -105,6 +139,62 @@ if (data) {
                 className="h-11"
               />
             </label>
+
+            <div>
+              <p className="text-sm font-medium">
+                Profile picture{" "}
+                <span className="font-normal text-muted-foreground">(optional)</span>
+              </p>
+
+              <div className="mt-2 flex items-center gap-4">
+                {image ? (
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image}
+                      alt="Profile preview"
+                      className="size-16 rounded-full border border-border object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      aria-label="Remove picture"
+                      className="absolute -right-1.5 -top-1.5 rounded-full bg-destructive p-1 text-destructive-foreground transition hover:opacity-90"
+                    >
+                      <XIcon className="size-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex size-16 items-center justify-center rounded-full border border-dashed border-border bg-muted/60">
+                    <CameraIcon className="size-5 text-muted-foreground" aria-hidden />
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <label
+                    htmlFor="signup-photo"
+                    className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition hover:bg-muted"
+                  >
+                    <CameraIcon className="size-4" aria-hidden />
+                    {image ? "Change picture" : "Upload picture"}
+                  </label>
+
+                  <input
+                    id="signup-photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    JPG, PNG or WebP, max 2 MB. Signing up with Google uses
+                    your Google photo instead.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <label className="flex flex-col gap-2 text-sm font-medium">
               Email
@@ -141,9 +231,15 @@ if (data) {
               </label>
             </div>
 
-            <Button type="submit" size="lg" className="mt-1 h-11 w-full">
-              Create account
+            <Button type="submit" size="lg" className="mt-1 h-11 w-full" disabled={pending}>
+              {pending ? "Creating account…" : "Create account"}
             </Button>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
           </form>
 
           <div className="relative my-6">
@@ -159,8 +255,8 @@ if (data) {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
-            onSubmit={handleGoogleSignUp}
               type="button"
+              onClick={() => handleSocialSignUp("google")}
               className="flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               <svg
@@ -182,8 +278,8 @@ if (data) {
             </button>
 
             <button
-            onSubmit={handleGitHubSignUp}
               type="button"
+              onClick={() => handleSocialSignUp("github")}
               className="flex h-11 items-center justify-center gap-2 rounded-md bg-black text-sm font-medium text-white transition-colors hover:bg-gray-800"
             >
               <svg

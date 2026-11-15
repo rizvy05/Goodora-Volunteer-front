@@ -1,11 +1,12 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CircleCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import {
   Card,
   CardContent,
@@ -14,32 +15,62 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-/** Demo form — no backend auth is wired up yet. */
 export default function SignInPage() {
   const [signedIn, setSignedIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
+  /** Where to go after signing in — only same-site paths are honoured. */
+  function getCallbackURL() {
+    if (typeof window === "undefined") return "";
 
-const formData = new FormData(e.target)
-const user=Object.fromEntries(formData.entries())
-console.log(user)
-const {data,error}=await authClient.signIn({
-  email:user.email as string,
-  password:user.password as string
-})
-console.log(data,error)
-}
-if (error) {
-  console.error("Error signing in:", error);
-  return;
-}
-if (data) {
-  console.log("User signed in successfully:", data);
-  setSignedIn(true)
-  redirect("/")
-}
+    const raw = new URLSearchParams(window.location.search).get("callbackURL");
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "";
 
+    return raw;
+  }
 
+  async function handleSignIn(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
 
+    const formData = new FormData(e.currentTarget);
+    const user = Object.fromEntries(formData.entries());
+
+    const { data, error } = await authClient.signIn.email({
+      email: user.email as string,
+      password: user.password as string,
+    });
+
+    setPending(false);
+
+    if (error) {
+      setError(error.message ?? "Unable to sign in. Please check your credentials.");
+      return;
+    }
+
+    if (data) {
+      const callbackURL = getCallbackURL();
+      if (callbackURL) {
+        window.location.assign(callbackURL);
+        return;
+      }
+      setSignedIn(true);
+    }
+  }
+
+  async function handleSocialSignIn(provider: "google" | "github") {
+    setError(null);
+    const { error } = await authClient.signIn.social({
+      provider,
+      callbackURL: getCallbackURL() || "/",
+    });
+
+    if (error) {
+      setError(error.message ?? "Unable to start social sign in.");
+    }
+  }
 
   if (signedIn) {
     return (
@@ -49,12 +80,12 @@ if (data) {
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
-          Signed in (demo)
+          Signed in
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Authentication isn&apos;t connected yet — in a live deployment
-          you&apos;d land on your dashboard now.
+          You&apos;re signed in — head to your dashboard to manage your
+          volunteer activities.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -85,13 +116,7 @@ if (data) {
         </CardHeader>
 
         <CardContent className="px-6 sm:px-8">
-          <form
-            className="flex flex-col gap-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSignedIn(true);
-            }}
-          >
+          <form className="flex flex-col gap-5" onSubmit={handleSignIn}>
             <label className="flex flex-col gap-2 text-sm font-medium">
               Email
               <Input
@@ -132,9 +157,15 @@ if (data) {
               </Link>
             </div>
 
-            <Button type="submit" size="lg" className="mt-1 h-11 w-full">
-              Sign in
+            <Button type="submit" size="lg" className="mt-1 h-11 w-full" disabled={pending}>
+              {pending ? "Signing in…" : "Sign in"}
             </Button>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
           </form>
 
           <div className="relative my-6">
@@ -150,8 +181,9 @@ if (data) {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button
+            <button
               type="button"
+              onClick={() => handleSocialSignIn("google")}
               className="flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               <svg
@@ -174,6 +206,7 @@ if (data) {
 
             <button
               type="button"
+              onClick={() => handleSocialSignIn("github")}
               className="flex h-11 items-center justify-center gap-2 rounded-md bg-black text-sm font-medium text-white transition-colors hover:bg-gray-800"
             >
               <svg
@@ -200,10 +233,6 @@ if (data) {
             >
               Create an account
             </Link>
-          </p>
-
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Demo form — authentication backend not connected.
           </p>
         </CardContent>
       </Card>

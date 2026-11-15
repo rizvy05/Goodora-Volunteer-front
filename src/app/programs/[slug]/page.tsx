@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRightIcon, CircleCheckIcon, UsersIcon } from "lucide-react";
+import { CircleCheckIcon, UsersIcon } from "lucide-react";
 import { getProgram, programs } from "@/lib/data/programs";
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/goodora/section-heading";
 import ProgramCard from "@/components/goodora/program-card";
+import BookProgramButton from "@/components/goodora/book-program-button";
 
 export function generateStaticParams() {
   return programs.map((program) => ({ slug: program.slug }));
@@ -58,10 +59,7 @@ export default async function ProgramDetailPage({
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button render={<Link href="/signup" />}>
-                Join as a volunteer
-                <ArrowRightIcon data-icon="inline-end" />
-              </Button>
+              <BookProgramButton slug={program.slug} title={program.title} />
               <Button variant="outline" render={<Link href="/contact" />}>
                 Ask a question
               </Button>

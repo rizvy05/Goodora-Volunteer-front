@@ -7,6 +7,22 @@ import HowItWorks from "@/components/goodora/home/how-it-works";
 import UpcomingEvents from "@/components/goodora/home/upcoming-events";
 import Testimonials from "@/components/goodora/home/testimonials";
 import FinalCta from "@/components/goodora/home/final-cta";
+// import { auth } from "next-auth";
+// import { headers } from "next/headers";
+
+// const {jwttoken}=await auth.api.getToken({
+//   headers: await headers,
+// })
+
+// console.log(jwttoken?.token) // <-- This will log the JWT token to the console
+// const res=await fetch ('http://localhost:8000/ ', {
+//   headers: {
+//     Authorization: `Bearer ${jwttoken?.token}`
+//   }
+// })
+
+
+
 
 export default function Home() {
   return (
